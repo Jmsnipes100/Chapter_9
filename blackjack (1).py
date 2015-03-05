@@ -66,8 +66,37 @@ class BJ_Hand(cards.Hand):
         return self.total > 21
 
 
+
+class Bet(object):
+    """ A Blackjack Gamble. """
+    # Values
+    def __init__(bet, money = 10):
+        bankroll  = money
+
+    # Betting options
+    def betting(bet,bankroll):
+        try:
+            if bankroll>  0:
+                wager = int(input("\nHow much do you want to wager?: "))
+                if wager >  bankroll:
+                    int(input("\n You can only wager "+ str(bankroll)+" or less. How much?: "))
+                elif wager <  0:
+                    int(input("\n You can only wager a positive number. How much?: "))
+        except ValueError:
+           int(input("\n That's not valid! Choose a number: "))
+
+    # Money Conditions
+    def gamble(bet):
+        if bet.bankroll<= 0:
+            print("\nYou are out of money! You're out of the game!")
+
+
 class BJ_Player(BJ_Hand):
     """ A Blackjack Player. """
+    def __init__(self, name,bankroll):
+        super(BJ_Player, self).__init__(name)
+        self.bankroll=bankroll
+
     def is_hitting(self):
         if self.total == 21:
             response = "n"
@@ -76,20 +105,24 @@ class BJ_Player(BJ_Hand):
             response = games.ask_yes_no("\n" + self.name + ", do you want a hit? (Y/N): ")
         return response == "y"
 
-    def bust(self):
+    def bust(self,wager):
         print(self.name, "busts.")
-        self.lose()
-
-    def lose(self):
+        self.lose(wager)
+    def lose(self, wager):
         print(self.name, "loses.")
+        self.bankroll=self.bankroll - wager
+        print("Your bankroll is: ",self.bankroll)
+        return self.bankroll
 
-    def win(self):
+    def win(self, wager):
         print(self.name, "wins.")
+        self.bankroll=self.bankroll+wager
+        print("Your bankroll is: ",self.bankroll)
+        return self.bankroll
 
     def push(self):
         print(self.name, "pushes.")
 
-        
 class BJ_Dealer(BJ_Hand):
     """ A Blackjack Dealer. """
     def is_hitting(self):
@@ -108,9 +141,10 @@ class BJ_Game(object):
     def __init__(self, names):      
         self.players = []
         for name in names:
-            player = BJ_Player(name)
+            bankroll=100
+            player = BJ_Player(name,bankroll)
+            playerbet=Bet(bankroll).betting(bankroll)
             self.players.append(player)
-
         self.dealer = BJ_Dealer("Dealer")
 
         self.deck = BJ_Deck()
@@ -126,14 +160,16 @@ class BJ_Game(object):
                 sp.append(player)
         return sp
 
-    def __additional_cards(self, player):
+    def __additional_cards(self,player):
         while not player.is_busted() and player.is_hitting():
             self.deck.deal([player])
             print(player)
             if player.is_busted():
-                player.bust()
-           
-    def play(self):
+                player.bust(self,wager)
+    def __player_broke(self):
+        if player is not broke and player.cash <=0:
+            player.broke
+    def play(self, wager):
         # deal initial 2 cards to everyone
         self.deck.deal(self.players + [self.dealer], per_hand = 2)
         self.dealer.flip_first_card()    # hide dealer's first card
@@ -158,14 +194,14 @@ class BJ_Game(object):
             if self.dealer.is_busted():
                 # everyone still playing wins
                 for player in self.still_playing:
-                    player.win()                    
+                    player.win(wager)                    
             else:
                 # compare each player still playing to dealer
                 for player in self.still_playing:
                     if player.total > self.dealer.total:
-                        player.win()
+                        player.win(wager)
                     elif player.total < self.dealer.total:
-                        player.lose()
+                        player.lose(wager)
                     else:
                         player.push()
 
@@ -179,7 +215,8 @@ class BJ_Game(object):
 
 def main():
     print("\t\tWelcome to Blackjack!\n")
-    
+    bankroll=0
+    wager=0
     names = []
     number = games.ask_number("How many players? (1 - 7): ", low = 1, high = 8)
     for i in range(number):
@@ -191,7 +228,7 @@ def main():
 
     again = None
     while again != "n":
-        game.play()
+        game.play(wager)
         again = games.ask_yes_no("\nDo you want to play again?: ")
           
 main()
