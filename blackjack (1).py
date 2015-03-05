@@ -84,7 +84,7 @@ class Bet(object):
                     int(input("\n You can only wager a positive number. How much?: "))
         except ValueError:
            int(input("\n That's not valid! Choose a number: "))
-
+        return wager
     # Money Conditions
     def gamble(bet):
         if bet.bankroll<= 0:
@@ -93,9 +93,10 @@ class Bet(object):
 
 class BJ_Player(BJ_Hand):
     """ A Blackjack Player. """
-    def __init__(self, name,bankroll):
+    def __init__(self, name,bankroll,playerbet):
         super(BJ_Player, self).__init__(name)
         self.bankroll=bankroll
+        self.wager=playerbet
 
     def is_hitting(self):
         if self.total == 21:
@@ -107,16 +108,16 @@ class BJ_Player(BJ_Hand):
 
     def bust(self,wager):
         print(self.name, "busts.")
-        self.lose(wager)
+        self.lose(self.wager)
     def lose(self, wager):
         print(self.name, "loses.")
-        self.bankroll=self.bankroll - wager
+        self.bankroll=self.bankroll - self.wager
         print("Your bankroll is: ",self.bankroll)
         return self.bankroll
 
     def win(self, wager):
         print(self.name, "wins.")
-        self.bankroll=self.bankroll+wager
+        self.bankroll=self.bankroll+self.wager
         print("Your bankroll is: ",self.bankroll)
         return self.bankroll
 
@@ -142,8 +143,9 @@ class BJ_Game(object):
         self.players = []
         for name in names:
             bankroll=100
-            player = BJ_Player(name,bankroll)
             playerbet=Bet(bankroll).betting(bankroll)
+            player = BJ_Player(name,bankroll,playerbet)
+            
             self.players.append(player)
         self.dealer = BJ_Dealer("Dealer")
 
@@ -165,7 +167,7 @@ class BJ_Game(object):
             self.deck.deal([player])
             print(player)
             if player.is_busted():
-                player.bust(self,wager)
+                player.bust(self)
     def __player_broke(self):
         if player is not broke and player.cash <=0:
             player.broke
